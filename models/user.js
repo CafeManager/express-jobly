@@ -9,6 +9,7 @@ const {
   UnauthorizedError,
 } = require("../expressError");
 
+
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
 
 /** Related functions for users. */
@@ -136,8 +137,20 @@ class User {
     );
 
     const user = userRes.rows[0];
-
+    
     if (!user) throw new NotFoundError(`No user: ${username}`);
+    
+    const applicationRes = await db.query(
+      `SELECT job_id
+            FROM applications WHERE username ILIKE $1 ORDER BY job_id`,
+    [username]);
+    
+    if(applicationRes.rows.length){
+        user["jobs"] = applicationRes.rows.map(ele => ele.job_id)
+    } else {
+      user["jobs"] = []
+    }
+    
 
     return user;
   }
@@ -204,6 +217,32 @@ class User {
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
+
+  static async apply(username, id) {
+  const duplicateCheck = await db.query(
+        `SELECT username
+         FROM applications
+         WHERE username = $1 AND job_id = $2`,
+      [username, id]
+  );
+
+  if (duplicateCheck.rows[0]) {
+    throw new BadRequestError(`Duplicate application: Username : ${username} Job_id: ${id}`);
+  }
+
+  const result = await db.query(
+        `INSERT INTO applications
+         (username,
+          job_id)
+         VALUES ($1, $2)
+         RETURNING job_id`,
+         [username, id],
+  );
+
+  const job_id = result.rows[0];
+
+  return job_id;
+}
 }
 
 

@@ -17,6 +17,37 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
+function sqlForPartialFilter(dataToCovertToFilter) {
+    const keys = Object.keys(dataToCovertToFilter);
+    if (keys.length === 0) throw new BadRequestError("No data");
+    let filterStrings = []
+    if(Number(dataToCovertToFilter["minEmployees"]) > Number(dataToCovertToFilter["maxEmployees"])){
+      throw new BadRequestError("Minimun cannot be greater than maximum");
+    }
+    if(dataToCovertToFilter["name"]){
+      filterStrings.push(`name ILIKE '%${dataToCovertToFilter["name"]}%'`)
+    }
+    if(dataToCovertToFilter["minEmployees"]){
+      filterStrings.push(`num_employees >= ${dataToCovertToFilter["minEmployees"]}`)
+    }
+    if(dataToCovertToFilter["maxEmployees"]){
+      filterStrings.push(`num_employees <= ${dataToCovertToFilter["maxEmployees"]}`)
+    }
+    if(dataToCovertToFilter["title"]){
+      filterStrings.push(`title ILIKE '%${dataToCovertToFilter["title"]}%'`)
+    }
+    if(dataToCovertToFilter["minSalary"]){
+      filterStrings.push(`salary >= ${dataToCovertToFilter["minSalary"]}`)
+    }
+    if(dataToCovertToFilter["hasEquity"]){
+      filterStrings.push(`equity > 0`)
+    }
 
 
-module.exports = { sqlForPartialUpdate, sqlForPartialUpdate };
+
+    let filterString = " WHERE " + filterStrings.join(" AND ") + " "
+  
+    return filterString
+}
+
+module.exports = { sqlForPartialUpdate, sqlForPartialFilter };

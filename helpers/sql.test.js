@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { sqlForPartialUpdate } = require("./sql");
+const { sqlForPartialUpdate, sqlForPartialFilter } = require("./sql");
 const { SECRET_KEY } = require("../config");
 
 describe("sqlForPartialUpdate", function () {
@@ -22,3 +22,18 @@ describe("sqlForPartialUpdate", function () {
 
   });
 });
+
+describe("sqlForFilterUpdate", function () {
+    test("filters", function () {
+      const propertiesToBeFiltered = {
+        maxEmployees: 50,
+        minEmployees: 20,
+        name: "arbitraryName"
+      }
+
+      const sqlString = sqlForPartialFilter(propertiesToBeFiltered)
+  
+      expect(sqlString).toEqual(` WHERE name ILIKE '%${propertiesToBeFiltered.name}%' AND num_employees >= ${propertiesToBeFiltered.minEmployees} AND num_employees <= ${propertiesToBeFiltered.maxEmployees} `)
+  
+    });
+  });

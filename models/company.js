@@ -3,6 +3,8 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate, sqlForPartialFilter } = require("../helpers/sql");
+const { getJobsFromCompany } = require("../models/job");
+const { get } = require("../routes/users");
 
 /** Related functions for companies. */
 
@@ -58,6 +60,8 @@ class Company {
                   logo_url AS "logoUrl"
            FROM companies
            ORDER BY name`);
+
+    
     return companiesRes.rows;
   }
 
@@ -79,18 +83,22 @@ class Company {
            FROM companies
            WHERE handle = $1`,
         [handle]);
-
-    const company = companyRes.rows[0];
-
+    let company = companyRes.rows[0];
+    
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+
+    const jobs = await getJobsFromCompany(handle)
+    
+    
+    company["jobs"] = jobs
+
+    
 
     return company;
   }
 
   static async findAllFilter(filters) {
-    if(filters){
     const whereClause = sqlForPartialFilter(filters)
-    }console.log(whereClause)
     const companiesRes = await db.query(
       `SELECT handle,
               name,
